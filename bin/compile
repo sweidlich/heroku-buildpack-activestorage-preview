@@ -32,7 +32,14 @@ echo 'Updating package list' | indent
 apt-get $APT_OPTIONS update >/dev/null
 
 echo -n 'Downloading packages' | indent
-packages=('ffmpeg' 'libpulse0' 'libxdamage1' 'libxfixes3' 'poppler-utils')
+case $STACK in
+cedar-14)
+  packages=('libav-tools' 'libpulse0' 'libxdamage1' 'libxfixes3' 'poppler-utils')
+  ;;
+*)
+  packages=('ffmpeg' 'libpulse0' 'libxdamage1' 'libxfixes3' 'poppler-utils')
+  ;;
+esac
 for package in "${packages[@]}"; do
   apt-get $APT_OPTIONS -y -d install --reinstall $package >/dev/null
   echo -n '.'
@@ -47,6 +54,11 @@ for deb in $(ls -1 $APT_CACHE_DIR/archives/*.deb); do
   echo -n '.'
 done
 echo ''
+
+if [ "$STACK" == "cedar-14" ]; then
+  mkdir -p "$BUILD_DIR/.heroku/activestorage-preview/usr/local"
+  cp -a "$BUILDPACK_DIR/cedar-14/bin" "$BUILD_DIR/.heroku/activestorage-preview/usr/local/bin"
+fi
 
 paths=$(cd $BUILD_DIR && find ./.heroku/activestorage-preview -iregex '.*/bin' -type d)
 library_paths=$(cd $BUILD_DIR && find ./.heroku/activestorage-preview -iregex '.*\.so\(\.[0-9]+\)*' | xargs -n 1 dirname | sort | uniq)
